@@ -1,0 +1,9 @@
+{
+    "watchlist": [
+        {"code":"SPY", "name":"S&P500 ETF", "exchange":"NYSE"},
+        {"code":"XOM", "name":"Exxon Mobile", "exchange":"NYSE"},
+        {"code":"RCL", "name":"Royal Carribean", "exchange":"NYSE"},
+        {"code":"QCOM", "name":"QualComm", "exchange":"NASDAQ"},
+        {"code":"D05.SI", "name":"DBS", "exchange":"SGX"}
+    ]
+}
