@@ -138,5 +138,3 @@ root.geometry("900x550+10+10")
 root.mainloop()
 
 print("Exit application")
-
-exit()
