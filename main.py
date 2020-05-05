@@ -27,6 +27,7 @@ class DrawingContext(object):
         self._stock = None
         self._canvas = None
         self._range = ""
+        self._chartType = "line"
 
     @property
     def canvas(self): 
@@ -48,6 +49,13 @@ class DrawingContext(object):
 
     def setRange(self, range):
         self._range = range
+
+    @property
+    def chartType(self): 
+        return self._chartType
+
+    def setChartType(self, chartType):
+        self._chartType = chartType
 
 _drawingContext = DrawingContext()
 
@@ -109,17 +117,32 @@ lbStocks.bind('<<ListboxSelect>>', onStockSelect)
 #chart control panel
 ranges = ("5D", "1M", "3M", "6M", "1Y", "2Y", "5Y", "Max", "Compare")
 def showChart(event):
-    _drawingContext.setRange(event.widget.cget("text"))
-    _plotService.plot()
+    command = event.widget.cget("text")
+    if command=="5D" or command=="1M" or command=="3M" or command=="6M" or command=="1Y" or command=="2Y" or command=="5Y" or command=="Max":
+        _drawingContext.setRange()
+        _plotService.plot()
+    if command=="Compare":
+        #ask for stock code
+        _plotService.plot()
     
 chartControlFrame = tk.LabelFrame(master=root, borderwidth=0, highlightthickness=0)
-chartControlFrame.place(x=200, y=20)
+chartControlFrame.place(x=200, y=10)
+col = 0
 for i, range in enumerate(ranges):
     label=tk.Label(chartControlFrame, text=range)
-    label.grid(row=0, column=i)
+    label.grid(row=0, column=i, padx=10)
+    col = col + 1
     label.bind("<Button-1>", showChart)
 
-#chart
+# Add chartype
+tkvar = tk.StringVar(root)
+choices = {'Line','Candle'} # Dictionary with options
+tkvar.set('Line') # set the default option
+chartTypeMenu = tk.OptionMenu(chartControlFrame, tkvar, *choices)
+chartTypeMenu.grid(row=0, column=col, padx=10, pady=5)
+col = col + 1
+
+#chart canvas
 chartCanvas = tk.Canvas(root, width=800, height=400)
 chartCanvas.place(x=200, y=40)
 _drawingContext.setCanvas(chartCanvas)
