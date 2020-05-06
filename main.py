@@ -1,64 +1,14 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-import json
+from tkinter import simpledialog
 
+from AppConfig import AppConfig
+from DrawingContext import DrawingContext
 from PlotService import PlotService
+from StockService import StockService
 
-#class definition
-class Config(object):
-    def __init__(self):
-        with open('config/watchlist.json') as f:
-            watchlistJson = json.load(f)
-        self._watchList = watchlistJson["watchlist"]
-
-    @property
-    def watchList(self): 
-        return self._watchList
-
-    def getStock(self, code):
-        for stock in self._watchList:
-            if stock["code"] == code:
-                return stock
-
-_config = Config()
-
-class DrawingContext(object):
-    def __init__(self):
-        self._stock = None
-        self._canvas = None
-        self._range = ""
-        self._chartType = "line"
-
-    @property
-    def canvas(self): 
-        return self._canvas
-
-    def setCanvas(self, canvas):
-        self._canvas = canvas
-
-    @property
-    def stock(self): 
-        return self._stock
-
-    def setStock(self, stock):
-        self._stock = stock
-
-    @property
-    def range(self): 
-        return self._range
-
-    def setRange(self, range):
-        self._range = range
-
-    @property
-    def chartType(self): 
-        return self._chartType
-
-    def setChartType(self, chartType):
-        self._chartType = chartType
-
+_config = AppConfig()
 _drawingContext = DrawingContext()
-
 _plotService = PlotService(_drawingContext)
 
 # program start here
@@ -87,23 +37,10 @@ helpmenu.add_command(label="About...", command=About)
 lblWatchlist = tk.Label(root, text="My Watchlist")
 lblWatchlist.place(x=20, y=20)
 
-#def onExchangeSelected(event):
-#    lbStocks.delete(0, tk.END)
-#    exchange = cbExchanges.get()
-#    for stock in _config.watchList.get(exchange):
-#        lbStocks.insert(tk.END, stock["code"])
-
-#cbExchanges = ttk.Combobox(root, values=_config.exchangeList)
-#cbExchanges.place(x=20, y=40, width=150)
-#cbExchanges.current(0)
-#cbExchanges.bind("<<ComboboxSelected>>", onExchangeSelected)
-
 def onStockSelect(event):
-    # Note here that Tkinter passes an event object to onselect()
-    w = event.widget
-    index = int(w.curselection()[0])
-    value = w.get(index)
-    _drawingContext.setStock(_config.getStock(value))
+    code = event.widget.get(int(event.widget.curselection()[0]))
+    _drawingContext.setStock(_config.getStock(code))
+    _drawingContext.setDf(StockService().loadData(code))
     _plotService.plot()
 
 lbStocks = tk.Listbox(root, height=30)
@@ -115,30 +52,45 @@ lbStocks.bind('<<ListboxSelect>>', onStockSelect)
 #stock basic information
 
 #chart control panel
-ranges = ("5D", "1M", "3M", "6M", "1Y", "2Y", "5Y", "Max", "Compare")
-def showChart(event):
-    command = event.widget.cget("text")
-    if command=="5D" or command=="1M" or command=="3M" or command=="6M" or command=="1Y" or command=="2Y" or command=="5Y" or command=="Max":
-        _drawingContext.setRange()
-        _plotService.plot()
-    if command=="Compare":
-        #ask for stock code
-        _plotService.plot()
-    
 chartControlFrame = tk.LabelFrame(master=root, borderwidth=0, highlightthickness=0)
 chartControlFrame.place(x=200, y=10)
+
+def onRangeClick(event):
+    dateRange = event.widget.cget("text")
+    _drawingContext.setRange(dateRange)
+    _plotService.plot()
+    
+ranges = ("5D", "1M", "3M", "6M", "1Y", "2Y", "5Y", "Max", "Compare")
 col = 0
 for i, range in enumerate(ranges):
     label=tk.Label(chartControlFrame, text=range)
     label.grid(row=0, column=i, padx=10)
     col = col + 1
-    label.bind("<Button-1>", showChart)
+    label.bind("<Button-1>", onRangeClick)
 
-# Add chartype
-tkvar = tk.StringVar(root)
+def onCompareClick(event):
+    #ask for stock code
+    codesToCompare = simpledialog.askstring(title="Stock Comparison", prompt="Enter the stock codes, seperated by comma")
+    if codesToCompare is not None:
+        #load adj close data for the list (normalize to base stock)
+        _plotService.plot()
+
+label=tk.Label(chartControlFrame, text="Compare")
+label.grid(row=0, column=i, padx=10)
+col = col + 1
+label.bind("<Button-1>", onCompareClick)
+
+def onChartTypeClick(*args):
+    chartType = chartTypeVar.get()
+    print(chartType)
+    _drawingContext.setChartType(chartType)
+    _plotService.plot()
+
+chartTypeVar = tk.StringVar(root)
+chartTypeVar.set('Line') # set the default option
+chartTypeVar.trace("w", onChartTypeClick)
 choices = {'Line','Candle'} # Dictionary with options
-tkvar.set('Line') # set the default option
-chartTypeMenu = tk.OptionMenu(chartControlFrame, tkvar, *choices)
+chartTypeMenu = tk.OptionMenu(chartControlFrame, chartTypeVar, *choices)
 chartTypeMenu.grid(row=0, column=col, padx=10, pady=5)
 col = col + 1
 

@@ -8,8 +8,6 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
-from StockService import StockService
-
 class PlotService:
     def __init__(self, drawingContext):
         self._drawingContext = drawingContext
@@ -32,12 +30,12 @@ class PlotService:
             plt.clf()
 
     def plot(self):
-        self.resetPlot()
-
-        #load data
         code = self._drawingContext.stock["code"]
         dateRange = self._drawingContext.range
-        df = StockService().loadData(code)
+        df = self._drawingContext.df
+
+        self.resetPlot()
+        
         if df is None:
             tk.messagebox.showinfo(title="Error", message="Failed to load data!")
             return
